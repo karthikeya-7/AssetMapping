@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>View File Content</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            height: 100vh;
+        }
+        .sidebar h2 {
+            color: white;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+        nav {
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f2f2f2;
+        }
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .table tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error {
+            color: red;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border: 1px solid #ffcccc;
+            border-radius: 4px;
+        }
+        #searchInput {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 300px;
+        }
+        .update-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .update-button:hover {
+            background-color: #218838;
+        }
+        .assign-button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .assign-button:hover {
+            background-color: #0056b3;
+        }
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .assigned-row {
+            background-color: #d1ecf1;
+        }
+        .assigned-row .entryCheckbox {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Dashboard</h2>
+        <ul>
+            <li><a href="/">Upload File</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        <div class="container">
+            <h1>File Content</h1>
+            <div class="top-controls">
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search for entries..">
+                <select id="commonAssignUser">
+                    <option value="">Assign To...</option>
+                    <option th:each="user : ${users}" th:value="${user.username}" th:text="${user.username}"></option>
+                </select>
+                <button class="assign-button" onclick="assignSelectedEntries()">Assign Selected</button>
+            </div>
+            <div th:if="${error}" class="error" th:text="${error}"></div>
+            <table class="table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" onclick="selectAllCheckboxes(this)"></th>
+                        <th>Pole Number</th>
+                        <th>Area</th>
+                        <th>District</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="entry, entryStat : ${tempTableEntries}" th:id="'entry-' + ${entryStat.index}">
+                        <td><input type="checkbox" class="entryCheckbox" th:value="${entry.id}"></td>
+                        <td th:text="${entry.poleNumber}">-</td>
+                        <td th:text="${entry.area}">-</td>
+                        <td th:text="${entry.district}">-</td>
+                        <td th:text="${entry.city}">-</td>
+                        <td th:text="${entry.state}">-</td>
+                        <td th:text="${entry.latitude}">-</td>
+                        <td th:text="${entry.longitude}">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        function filterTable() {
+            let input = document.getElementById('searchInput');
+            let filter = input.value.toLowerCase();
+            let table = document.getElementById('dataTable');
+            let tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) { // Skip the header row
+                tr[i].style.display = 'none';
+                let td = tr[i].getElementsByTagName('td');
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        if (td[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = '';
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function selectAllCheckboxes(source) {
+            let table = document.getElementById('dataTable');
+            let checkboxes = table.querySelectorAll('tbody tr');
+            checkboxes.forEach(row => {
+                if (row.style.display !== 'none') {
+                    row.querySelector('.entryCheckbox').checked = source.checked;
+                }
+            });
+        }
+
+        function assignSelectedEntries() {
+            let selectedEntries = document.querySelectorAll('.entryCheckbox:checked');
+            let assignUserSelect = document.getElementById('commonAssignUser');
+            let selectedUsername = assignUserSelect.value;
+            if (selectedEntries.length > 0 && selectedUsername.trim() !== '') {
+                selectedEntries.forEach(entryCheckbox => {
+                    let entryId = entryCheckbox.value;
+                    console.log('Assigning Entry ID ' + entryId + ' to ' + selectedUsername);
+                    fetch('/assign/' + entryId + '?username=' + encodeURIComponent(selectedUsername), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Assignment successful for Entry ID ' + entryId);
+                            // Mark the row as assigned
+                            let row = entryCheckbox.closest('tr');
+                            row.classList.add('assigned-row');
+                            entryCheckbox.checked = false;
+                            entryCheckbox.disabled = true;
+                        } else {
+                            console.error('Assignment failed for Entry ID ' + entryId + ':', response.statusText);
+                            // Handle error appropriately
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error assigning Entry ID ' + entryId + ':', error);
+                    });
+                });
+            } else {
+                alert('Please select entries and a user to assign.');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            height: 100vh;
+        }
+        .sidebar h2 {
+            color: white;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .table th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        .form-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Dashboard</h2>
+        <ul>
+            <li sec:authorize="hasRole('ROLE_ADMIN')"><a href="/">Upload File</a></li>
+            <li sec:authorize="hasRole('ROLE_ADMIN')"><a href="/view-users">View Users</a></li>
+            <li><a href="/logout">Sign Out</a></li>
+			<li sec:authorize="!hasRole('ROLE_ADMIN')"><a href="/assigned-tasks">Assigned Tasks</a></li>
+        </ul>
+    </div>
+	<div class="content">
+	        <div sec:authorize="hasRole('ROLE_ADMIN')" class="form-container">
+	            <h2>Upload File</h2>
+	            <form method="POST" enctype="multipart/form-data" action="/upload">
+	                <input type="file" name="file"/>
+	                <br/><br/>
+	                <input type="submit" value="Upload"/>
+	            </form>
+	            <div th:if="${error}" class="error" th:text="${error}"></div>
+	        </div>
+	        <h2 sec:authorize="hasRole('ROLE_ADMIN')">Uploaded Files</h2>
+	        <table class="table" sec:authorize="hasRole('ROLE_ADMIN')">
+	            <thead>
+	                <tr>
+	                    <th>ID</th>
+	                    <th>Original File Name</th>
+	                    <th>Timestamp File Name</th>
+	                    <th>Status</th>
+	                    <th>Actions</th>
+	                </tr>
+	            </thead>
+	            <tbody>
+	                <tr th:each="file : ${files}">
+	                    <td th:text="${file.id}">1</td>
+	                    <td th:text="${file.originalFileName}">OriginalFileName</td>
+	                    <td th:text="${file.timestampFileName}">TimestampFileName</td>
+	                    <td th:text="${file.status}">Status</td>
+	                    <td>
+	                        <a th:href="@{'/view/' + ${file.id}}">View</a>
+	                    </td>
+	                </tr>
+	            </tbody>
+	        </table>
+        <h2 sec:authorize="!hasRole('ROLE_ADMIN')">Assigned Tasks</h2>
+        <table class="table" sec:authorize="!hasRole('ROLE_ADMIN')">
+            <thead>
+                <tr>
+                    <th>Pole Number</th>
+                    <th>Area</th>
+                    <th>District</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="entry : ${assignedEntries}">
+                    <th:block th:if="${entry.assignedUser.username == #authentication.name}">
+                        <td th:text="${entry.poleNumber}">-</td>
+                        <td th:text="${entry.area}">-</td>
+                        <td th:text="${entry.district}">-</td>
+                        <td th:text="${entry.city}">-</td>
+                        <td th:text="${entry.state}">-</td>
+                        <td th:text="${entry.latitude}">-</td>
+                        <td th:text="${entry.longitude}">-</td>
+                        <td>
+                            <select th:model="${entry.status}">
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                                <option value="In Progress">In Progress</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" th:model="${entry.remarks}" />
+                        </td>
+                    </th:block>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

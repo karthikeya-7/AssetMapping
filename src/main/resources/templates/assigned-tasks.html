@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Assigned Tasks</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sidebar h2 {
+            color: white;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+        .back-button {
+            background-color: #ffffff;
+            color: #007BFF;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .back-button:hover {
+            background-color: #e6e6e6;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .table th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        .form-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <h2>Dashboard</h2>
+            <ul>
+                <li><a href="/">Upload File</a></li>
+            </ul>
+        </div>
+        <button class="back-button" onclick="goBack()">Back</button>
+    </div>
+    <div class="content">
+        <h2>Assigned Tasks</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pole Number</th>
+                    <th>Area</th>
+                    <th>District</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+					<th>Status</th>
+					<th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="entry : ${assignedEntries}">
+                        <td th:text="${entry.poleNumber}">-</td>
+                        <td th:text="${entry.area}">-</td>
+                        <td th:text="${entry.district}">-</td>
+                        <td th:text="${entry.city}">-</td>
+                        <td th:text="${entry.state}">-</td>
+                        <td th:text="${entry.latitude}">-</td>
+                        <td th:text="${entry.longitude}">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
