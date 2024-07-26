@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaflet Map with Dynamic Markers</title>
+    <title>Leaflet Map with Drawing and Dynamic Markers</title>
+    
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="/webjars/leaflet/1.7.1/dist/leaflet.css" />
-    <!-- Leaflet JavaScript -->
-    <script src="/webjars/leaflet/1.7.1/dist/leaflet.js"></script>
-    <!-- Papaparse for CSV parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
+    
     <style>
         #map {
             height: 600px;
@@ -18,34 +18,92 @@
 </head>
 <body>
     <div id="map"></div>
-
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet Draw JS -->
+    <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
     <script>
-        // Initialize Leaflet map
+        // Initialize the map
         var map = L.map('map').setView([17.4374, 78.4482], 13); // Default center and zoom
-
-        // Add OpenStreetMap tiles
+        
+        // Add a tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-
+        
+        // Initialize the feature group to store drawn items
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        
+        // Initialize the draw control and pass it the feature group
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
+        
+        // Event handler for when a shape is created
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            // Add the new shape to the feature group
+            drawnItems.addLayer(layer);
+        });
+        
+        // Optional: handle when a shape is edited
+        map.on(L.Draw.Event.EDITED, function (event) {
+            var layers = event.layers;
+            layers.eachLayer(function (layer) {
+                console.log('Layer edited:', layer);
+            });
+        });
+        
+        // Optional: handle when a shape is deleted
+        map.on(L.Draw.Event.DELETED, function (event) {
+            var layers = event.layers;
+            layers.eachLayer(function (layer) {
+                console.log('Layer deleted:', layer);
+            });
+        });
+        
         // Function to fetch CSV entries from backend
         async function fetchEntries() {
             try {
-                const response = await fetch('/api/entries');
+                const response = await fetch('/api/entries'); // Adjust the URL to your endpoint
                 const text = await response.text(); // Get CSV text
-                const data = Papa.parse(text, { header: true }).data; // Parse CSV with headers
-
+                const parsedData = Papa.parse(text, { header: true }).data; // Parse CSV with headers
+                
+                console.log(parsedData); // Log data to debug
+                
                 // Add markers for each entry
-                data.forEach(entry => {
-                    const marker = L.marker([entry.latitude, entry.longitude]).addTo(map);
-                    marker.bindPopup(`<b>Pole Number:</b> ${entry.poleNumber}<br><b>Area:</b> ${entry.area}<br><b>District:</b> ${entry.district}<br><b>City:</b> ${entry.city}<br><b>State:</b> ${entry.state}<br><b>Assigned User:</b> ${entry.assignedUser}`).openPopup();
+                parsedData.forEach(entry => {
+                    const lat = parseFloat(entry.latitude);
+                    const lon = parseFloat(entry.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        const marker = L.marker([lat, lon]).addTo(map);
+                        marker.bindPopup(`
+                            <b>Pole Number:</b> ${entry.poleNumber}<br>
+                            <b>Area:</b> ${entry.area}<br>
+                            <b>District:</b> ${entry.district}<br>
+                            <b>City:</b> ${entry.city}<br>
+                            <b>State:</b> ${entry.state}<br>
+                            <b>Assigned User:</b> ${entry.assignedUser}
+                        `).openPopup();
+                    } else {
+                        console.warn(`Invalid coordinates: latitude=${entry.latitude}, longitude=${entry.longitude}`);
+                    }
                 });
             } catch (error) {
                 console.error('Error fetching entries:', error);
             }
         }
-
+        
         // Call fetchEntries function when the page has loaded
         document.addEventListener('DOMContentLoaded', fetchEntries);
     </script>
