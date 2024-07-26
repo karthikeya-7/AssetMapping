@@ -2,7 +2,7 @@ package com.example.springbootfileupload.service;
 
 import com.example.springbootfileupload.entity.TempTableEntry;
 import com.example.springbootfileupload.entity.UploadedFile;
-import com.example.springbootfileupload.entity.User;
+import com.example.springbootfileupload.entity.Users;
 import com.example.springbootfileupload.repository.TempTableRepository;
 import com.example.springbootfileupload.repository.UploadedFileRepository;
 import com.example.springbootfileupload.repository.UserRepository;
@@ -198,7 +198,7 @@ public class FileUploadService {
     }
 
     @Transactional
-    public List<User> getAllUsers() {
+    public List<Users> getAllUsers() {
         return userRepository.findAll();
     }
 
@@ -206,4 +206,7 @@ public class FileUploadService {
     public List<TempTableEntry> getAssignedEntriesByUsername(String username) {
         return tempTableRepository.findByAssignedUser(username);
     }
+    
+
+
 }

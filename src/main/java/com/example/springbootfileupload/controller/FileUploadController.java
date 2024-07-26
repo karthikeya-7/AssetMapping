@@ -2,7 +2,7 @@ package com.example.springbootfileupload.controller;
 
 import com.example.springbootfileupload.entity.TempTableEntry;
 import com.example.springbootfileupload.entity.UploadedFile;
-import com.example.springbootfileupload.entity.User;
+import com.example.springbootfileupload.entity.Users;
 import com.example.springbootfileupload.service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,7 +48,7 @@ public class FileUploadController {
     public String viewFileContent(@PathVariable Long id, Model model) {
         try {
             List<TempTableEntry> tempTableEntries = fileUploadService.getTempTableEntriesByFileId(id);
-            List<User> users = fileUploadService.getAllUsers();
+            List<Users> users = fileUploadService.getAllUsers();
 
             if (tempTableEntries.isEmpty()) {
                 model.addAttribute("error", "No data found for this file.");
@@ -69,7 +69,7 @@ public class FileUploadController {
 
     @GetMapping("/view-users")
     public String viewUsers(Model model) {
-        List<User> users = fileUploadService.getAllUsers();
+        List<Users> users = fileUploadService.getAllUsers();
         model.addAttribute("users", users);
         return "view-users";
     }
@@ -87,7 +87,7 @@ public class FileUploadController {
     }
     
     @GetMapping("/assigned-tasks")
-    public String getAssignedTasks(Model model, @AuthenticationPrincipal User currentUser) {
+    public String getAssignedTasks(Model model, @AuthenticationPrincipal Users currentUser) {
         try {
             String username = currentUser.getUsername();
             List<TempTableEntry> assignedEntries = fileUploadService.getAssignedEntriesByUsername(username);
@@ -99,4 +99,10 @@ public class FileUploadController {
             return "error"; // Handle error appropriately, e.g., show an error page
         }
     }
+
+    @GetMapping("/view-map")
+    public String viewMap() {
+        return "view-map";
+    }
+
 }

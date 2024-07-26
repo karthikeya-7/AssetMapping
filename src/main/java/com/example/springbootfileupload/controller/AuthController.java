@@ -1,6 +1,6 @@
 package com.example.springbootfileupload.controller;
 
-import com.example.springbootfileupload.entity.User;
+import com.example.springbootfileupload.entity.Users;
 import com.example.springbootfileupload.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,12 +17,12 @@ public class AuthController {
 
     @GetMapping("/signup")
     public String showSignUpForm(Model model) {
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new Users());
         return "signup";
     }
 
     @PostMapping("/signup")
-    public String signUp(@ModelAttribute User user, Model model) {
+    public String signUp(@ModelAttribute Users user, Model model) {
         if (userService.findByUsername(user.getUsername()) != null) {
             model.addAttribute("error", "Username already exists");
             return "signup";

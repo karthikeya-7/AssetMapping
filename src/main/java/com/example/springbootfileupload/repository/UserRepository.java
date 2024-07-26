@@ -1,12 +1,12 @@
 package com.example.springbootfileupload.repository;
 
-import com.example.springbootfileupload.entity.User;
+import com.example.springbootfileupload.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    User findByUsername(String username);
+public interface UserRepository extends JpaRepository<Users, Long> {
+    Users findByUsername(String username);
 
-    User findByLocation(String location);
+    Users findByLocation(String location);
 }

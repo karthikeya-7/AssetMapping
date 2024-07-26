@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with Dynamic Markers</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="/webjars/leaflet/1.7.1/dist/leaflet.css" />
+    <!-- Leaflet JavaScript -->
+    <script src="/webjars/leaflet/1.7.1/dist/leaflet.js"></script>
+    <!-- Papaparse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        #map {
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        // Initialize Leaflet map
+        var map = L.map('map').setView([17.4374, 78.4482], 13); // Default center and zoom
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Function to fetch CSV entries from backend
+        async function fetchEntries() {
+            try {
+                const response = await fetch('/api/entries');
+                const text = await response.text(); // Get CSV text
+                const data = Papa.parse(text, { header: true }).data; // Parse CSV with headers
+
+                // Add markers for each entry
+                data.forEach(entry => {
+                    const marker = L.marker([entry.latitude, entry.longitude]).addTo(map);
+                    marker.bindPopup(`<b>Pole Number:</b> ${entry.poleNumber}<br><b>Area:</b> ${entry.area}<br><b>District:</b> ${entry.district}<br><b>City:</b> ${entry.city}<br><b>State:</b> ${entry.state}<br><b>Assigned User:</b> ${entry.assignedUser}`).openPopup();
+                });
+            } catch (error) {
+                console.error('Error fetching entries:', error);
+            }
+        }
+
+        // Call fetchEntries function when the page has loaded
+        document.addEventListener('DOMContentLoaded', fetchEntries);
+    </script>
+</body>
+</html>
