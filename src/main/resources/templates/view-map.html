@@ -14,10 +14,35 @@
         #map {
             height: 600px;
         }
+        #markerTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #markerTable th, #markerTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #markerTable th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <table id="markerTable">
+        <thead>
+            <tr>
+                <th>Pole Number</th>
+                <th>Area</th>
+                <th>District</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Assigned User</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
     
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -48,28 +73,8 @@
         });
         map.addControl(drawControl);
         
-        // Event handler for when a shape is created
-        map.on(L.Draw.Event.CREATED, function (event) {
-            var layer = event.layer;
-            // Add the new shape to the feature group
-            drawnItems.addLayer(layer);
-        });
-        
-        // Optional: handle when a shape is edited
-        map.on(L.Draw.Event.EDITED, function (event) {
-            var layers = event.layers;
-            layers.eachLayer(function (layer) {
-                console.log('Layer edited:', layer);
-            });
-        });
-        
-        // Optional: handle when a shape is deleted
-        map.on(L.Draw.Event.DELETED, function (event) {
-            var layers = event.layers;
-            layers.eachLayer(function (layer) {
-                console.log('Layer deleted:', layer);
-            });
-        });
+        // Array to store marker data
+        var markersData = [];
         
         // Function to fetch CSV entries from backend
         async function fetchEntries() {
@@ -78,25 +83,40 @@
                 const text = await response.text(); // Get CSV text
                 const parsedData = Papa.parse(text, { header: true }).data; // Parse CSV with headers
                 
-                console.log(parsedData); // Log data to debug
-                
-                // Add markers for each entry
-                parsedData.forEach(entry => {
+                // Store markers data
+                markersData = parsedData.map(entry => {
                     const lat = parseFloat(entry.latitude);
                     const lon = parseFloat(entry.longitude);
                     
+                    // Validate coordinates
                     if (!isNaN(lat) && !isNaN(lon)) {
-                        const marker = L.marker([lat, lon]).addTo(map);
-                        marker.bindPopup(`
-                            <b>Pole Number:</b> ${entry.poleNumber}<br>
-                            <b>Area:</b> ${entry.area}<br>
-                            <b>District:</b> ${entry.district}<br>
-                            <b>City:</b> ${entry.city}<br>
-                            <b>State:</b> ${entry.state}<br>
-                            <b>Assigned User:</b> ${entry.assignedUser}
-                        `).openPopup();
+                        return {
+                            lat: lat,
+                            lon: lon,
+                            poleNumber: entry.poleNumber,
+                            area: entry.area,
+                            district: entry.district,
+                            city: entry.city,
+                            state: entry.state,
+                            assignedUser: entry.assignedUser
+                        };
                     } else {
                         console.warn(`Invalid coordinates: latitude=${entry.latitude}, longitude=${entry.longitude}`);
+                        return null;
+                    }
+                }).filter(data => data !== null); // Remove invalid entries
+                
+                // Add markers for each entry
+                markersData.forEach(data => {
+                    if (!isNaN(data.lat) && !isNaN(data.lon)) {
+                        L.marker([data.lat, data.lon]).addTo(map).bindPopup(`
+                            <b>Pole Number:</b> ${data.poleNumber}<br>
+                            <b>Area:</b> ${data.area}<br>
+                            <b>District:</b> ${data.district}<br>
+                            <b>City:</b> ${data.city}<br>
+                            <b>State:</b> ${data.state}<br>
+                            <b>Assigned User:</b> ${data.assignedUser}
+                        `);
                     }
                 });
             } catch (error) {
@@ -104,8 +124,83 @@
             }
         }
         
+        // Function to update the table with marker details
+        function updateTable(markerEntries) {
+            const tbody = document.querySelector('#markerTable tbody');
+            tbody.innerHTML = ''; // Clear previous table entries
+            
+            markerEntries.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.poleNumber}</td>
+                    <td>${entry.area}</td>
+                    <td>${entry.district}</td>
+                    <td>${entry.city}</td>
+                    <td>${entry.state}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Function to check if a marker is inside a drawn layer
+        function isMarkerInsideLayer(marker, layer) {
+            // Check if the layer is a polygon or circle
+            if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+                return layer.getBounds().contains(marker.getLatLng());
+            } else if (layer instanceof L.Circle) {
+                return layer.getLatLng().distanceTo(marker.getLatLng()) <= layer.getRadius();
+            }
+            return false;
+        }
+        
         // Call fetchEntries function when the page has loaded
         document.addEventListener('DOMContentLoaded', fetchEntries);
+        
+        // Event handler for when a shape is created
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            // Add the new shape to the feature group
+            drawnItems.addLayer(layer);
+            
+            // Get the markers inside the drawn layer
+            var markersInLayer = markersData.filter(data => {
+                var markerLatLng = L.latLng(data.lat, data.lon);
+                var marker = L.marker(markerLatLng); // Create a temporary marker to check its location
+                return isMarkerInsideLayer(marker, layer);
+            });
+            
+            // Update the table with the markers inside the drawn layer
+            updateTable(markersInLayer);
+        });
+        
+        // Optional: handle when a shape is edited
+        map.on(L.Draw.Event.EDITED, function (event) {
+            var layers = event.layers;
+            layers.eachLayer(function (layer) {
+                console.log('Layer edited:', layer);
+                
+                // Get the markers inside the edited layer
+                var markersInLayer = markersData.filter(data => {
+                    var markerLatLng = L.latLng(data.lat, data.lon);
+                    var marker = L.marker(markerLatLng); // Create a temporary marker to check its location
+                    return isMarkerInsideLayer(marker, layer);
+                });
+                
+                // Update the table with the markers inside the edited layer
+                updateTable(markersInLayer);
+            });
+        });
+        
+        // Optional: handle when a shape is deleted
+        map.on(L.Draw.Event.DELETED, function (event) {
+            var layers = event.layers;
+            layers.eachLayer(function (layer) {
+                console.log('Layer deleted:', layer);
+                
+                // Optionally clear the table or do something else
+                document.querySelector('#markerTable tbody').innerHTML = '';
+            });
+        });
     </script>
 </body>
 </html>
